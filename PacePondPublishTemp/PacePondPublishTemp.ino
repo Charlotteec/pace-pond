@@ -39,7 +39,7 @@ int status = WL_IDLE_STATUS;
 
 WiFiClient client;
 PubSubClient client2(client);
-
+int tickEvent;
 
 void setup() {
   //Initialize serial and wait for port to open:
@@ -48,8 +48,6 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-
-  int tickEvent = t.every(interval*1000, doThingy);
 
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -66,16 +64,19 @@ void setup() {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid);
 
-
     // wait 10 seconds for connection:
     delay(10000);
   }
   Serial.println("Connected to wifi");
-  printWiFiStatus();
+  //printWiFiStatus();
   delay(250);
   client2.connect(mqtt_server);
   client2.setServer(mqtt_server, 1883);
   client2.setCallback(callback);
+  
+  t.every(interval*1000, doThingy);
+  Serial.println(interval);
+
 }
 
 
@@ -95,10 +96,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 command = mqttinput.substring(0,1);
 
 if(command == "i"){
-  parameter = mqttinput.substring(2,4);
+  parameter = mqttinput.substring(2, mqttinput.length());
   interval = parameter.toInt();
+  //interval = 60;
   Serial.print("Interval set to: ");
-  Serial.println(interval*1);
+  Serial.println(interval);
+  t.update();
+  //tickEvent = t.every(interval*1000, doThingy);
+
 }
 }
 
@@ -146,7 +151,7 @@ void loop() {
   client2.loop();
   
      t.update();
-
+     //Serial.println(interval);
   
 }
 
